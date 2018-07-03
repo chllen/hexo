@@ -28,19 +28,15 @@ tags:
 ![](update/01.png)  
 
 打开Git的命令窗口，在命令窗口输入安装命令后，然后回车：  
-
 >npm install -g hexo
 
-初始化hexo命令：  
-
->hexo init
-
 安装相关的依赖包，输入下面的命令，回车：  
-
 >npm install
- 
-接着依次执行以下命令:  
- 
+
+初始化hexo命令：
+>hexo init 
+
+接着依次执行以下命令:   
 >hexo g //生成博客静态文件  
 hexo s //启动本地服务 
 
