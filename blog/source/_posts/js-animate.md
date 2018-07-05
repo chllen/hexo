@@ -148,17 +148,15 @@ animate() 方法执行 CSS 属性集的自定义动画。
 	window.onload=function(){
 		var selecter=document.getElementById('selecter');
 		document.getElementById('start').onclick=function(){
-			selecter.effect({height:300});
-			selecter.effect({width:300});
-			//selecter.queue(function () {
-				//div.css("background-color","red");  
-				//div.dequeue();
-			//});
-			//selecter.animate({height:100});
-			//selecter.animate({width:100},"slow");
+			selecter.animate({height:300,width:100}).animate({width:300});
+			selecter.queue(function (){
+				selecter.style.backgroundColor = "red";
+				selecter.dequeue();
+			});
+			selecter.animate({height:100}).animate({width:100});
 		};
-		document.getElementById('stop').click=function(){
-			selector.clearQueue();
+		document.getElementById('stop').onclick=function(){
+			selecter.clearQueue();
 		};
 	};
 	</script> 
@@ -173,9 +171,10 @@ animate() 方法执行 CSS 属性集的自定义动画。
 	</body>
 	<script>
 	var Queue = function(obj) {
-		this.obj = obj || this;
-        this.obj.task = [];
-		this.obj.params = [];
+			this.obj = obj || this;
+			this.obj.task = [];
+			this.obj.params = [];
+			this.instance = null;
     };
     Queue.prototype = {
         constructor: Queue,
@@ -195,37 +194,67 @@ animate() 方法执行 CSS 属性集的自定义动画。
             var self = this.obj,
                 task = self.task;
 				params = self.params;
+			//isdequeue属性判断正在运行队列，true为正在运行
             self.isdequeue = true;
             var el = task.shift() || function() {};
 			var args = params.shift() || [];
-			Array.prototype.unshift.call(args,self);
+			Array.prototype.unshift.call(args,this,self);
             if (typeof el == "number") {
                 setTimeout(function() {
-                    self.dequeue();
+                    this.dequeue();
                 }, el);
             } else if (typeof el == "function") {
                 el.apply(this,args);
-                if (task.length) {
-                    self.dequeue();
-                } else {
-                    //self.isdequeue = false;
-                }
             }
         }
     };
-	Object.prototype.effect = function (){
-		var q = new Queue(this);
+	//单例模式
+	Queue.getInstance = function(name){
+	   if(!this.instance){
+			this.instance = new Queue(name);
+		}
+		return this.instance;
+	};
+	//原生js中，animate是Element对象的属性
+	Element.prototype.animate = function (){
+		var q = Queue.getInstance(this);
 		q.queue(arguments);
 		q.queue(startMov);
+		//避免重复运行
 		if(!q.obj.isdequeue){
 			q.dequeue();
 		}
+		//方便链式调用
+		return this;
 	}
-	function startMov(obj, json, fn) {//fn回调函数
+	
+	Element.prototype.queue = function (fn){
+		var q = Queue.getInstance(this);
+		//没有参数传入，数据为空
+		q.queue(null);
+		q.queue(fn);
+		return this;
+	}
+	
+	Element.prototype.dequeue = function (){
+		var q = Queue.getInstance(this);
+		q.dequeue();
+	}
+	
+	Element.prototype.clearQueue = function (){
+		new Queue(this);
+		return false;
+	}
+	
+	
+	function startMov(q,obj, json, fn) {//fn回调函数
         clearInterval(obj.timer);//执行动画之前清除动画
-        var flag = true;//是否动画都完成了
         obj.timer = setInterval(function () {
+			var isComplate = [];
             for (var attr in json) {
+				if(!json.hasOwnProperty(attr)){
+					continue;
+				}
                 var icur = 0;
                 if (attr == 'opacity') {
                     icur = Math.round(parseFloat(getStyle(obj, attr)) * 100);//转换成整数,并且四舍五入下
@@ -236,24 +265,32 @@ animate() 方法执行 CSS 属性集的自定义动画。
                 var speed = 0;
                 speed = (json[attr] - icur) / 8;//缓冲运动效果
                 speed = speed > 0 ? Math.ceil(speed) : Math.floor(speed);
-                if (icur != json[attr]) {
-                    flag = false;
-                }
+				//判断动画是否完成
+				flag = icur != json[attr] ? false : true;
+				isComplate.push(flag);
                 if (attr == 'opacity') {
                     obj.style.filter = 'alpha(opacity:' + (icur + speed) + ')';
                     obj.style.opacity = (icur + speed) / 100;
                 } else {
                     obj.style[attr] = icur + speed + 'px';
                 }
-                if (flag) {
-                    clearInterval(obj.timer);
-                    if (fn) {
-                        fn();
-                    }
-					q.dequeue();
+            }
+			var ret = isComplate.every(function (val){
+				return val === true;
+			});
+			if (ret) {
+                clearInterval(obj.timer);
+                if (fn) {
+                    fn();
                 }
+				q.dequeue();
+				self = q.obj;
+				if(!self.task.length){
+					self.isdequeue = false;
+				}
             }
         }, 30);
+		//方便链式调用
     }
     function getStyle(obj, attr)
     {
