@@ -1,5 +1,6 @@
 ---
 title: 使用Github+hexo搭建个人博客教程
+date: 2018-06-25 15:24:22
 categories:
 - javascript
 tags:

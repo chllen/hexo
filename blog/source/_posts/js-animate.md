@@ -1,24 +1,21 @@
 ---
-title: jquery  animate分析，以及队列在动画效果中的应用
+title: 原生js仿jq实现链式调用，延时加载
 date: 2018-07-03 15:24:22
+categories:
+- javascript
 tags:
+- js
+- jquery
 ---
-###jquery animate基础知识
+### 前言  
+>我们在开发项目的过程中，经常会遇到类似于jq的animate()，queue(),end(),或者是angular.js的promise等延时加载和链式调用的方法，理解其原理有利于我们编程能力的提高  
 
-####animate定义
-animate() 方法执行 CSS 属性集的自定义动画。
-该方法通过 CSS 样式将元素从一个状态改变为另一个状态。CSS属性值是逐渐改变的，这样就可以创建动画效果。  
-只有数字值可创建动画（比如 "height:'30px'"）。字符串值无法创建动画（比如 "background-color:red"）。  
-提示：请使用 "+=" 或 "-=" 来创建相对动画,（例如："left:+=20"或者"left:-=30",这样运动轨迹相反）  
+### animate用法  
+[具体参数详解](http://www.runoob.com/jquery/eff-animate.html);  
 
-####animate用法
-<$(selector).animate({styles},speed,easing,callback);  
-或者 
-<$(selector).animate({styles},{options});
-[具体参数详解]();
+#########################  
 
-###animate动画实例
-
+### animate动画实例  
 ```
 	<!DOCTYPE html>
 	<html>
@@ -55,8 +52,8 @@ animate() 方法执行 CSS 属性集的自定义动画。
 	<div style="background:#98bf21;height:100px;width:100px;position:relative"></div>
 ```
 
-如何实现animate的链式调用呢？
-首先我们介绍一下，js的队列，代码如图：
+使用原生js实现动画实例的效果，首先我们需要下面两个封装代码
+#### js队列封装
 ```
  var Queue = function() {
         this.list = [];
@@ -94,7 +91,7 @@ animate() 方法执行 CSS 属性集的自定义动画。
     };
 ```
 
-封装动画框架：
+#### 封装动画框架：
 ```
  function startMov(obj, json, fn) {//fn回调函数
         clearInterval(obj.timer);//执行动画之前清除动画
@@ -138,6 +135,10 @@ animate() 方法执行 CSS 属性集的自定义动画。
         }
     }
 ```
+
+#### 链式调用
+
+通过对上面原生js的改造，实现和动画实例一样的效果：
 ```
 <!DOCTYPE html>
 	<html>
@@ -148,12 +149,12 @@ animate() 方法执行 CSS 属性集的自定义动画。
 	window.onload=function(){
 		var selecter=document.getElementById('selecter');
 		document.getElementById('start').onclick=function(){
-			selecter.animate({height:300,width:100}).animate({width:300});
+			selecter.animate({height:300,width:100}).animate({width:300}).end(1000);
 			selecter.queue(function (){
 				selecter.style.backgroundColor = "red";
 				selecter.dequeue();
 			});
-			selecter.animate({height:100}).animate({width:100});
+			selecter.animate({height:100}).animate({width:100})
 		};
 		document.getElementById('stop').onclick=function(){
 			selecter.clearQueue();
@@ -187,21 +188,23 @@ animate() 方法执行 CSS 属性集的自定义动画。
             return this;
         },
         wait: function(ms) {
-            this.obj.task.push(ms)
+			this.obj.params.push('');
+            this.obj.task.push(ms);
             return this;
         },
         dequeue: function() {
-            var self = this.obj,
-                task = self.task;
-				params = self.params;
+			var self = this;
+				obj = self.obj,
+                task = obj.task;
+				params = obj.params;
 			//isdequeue属性判断正在运行队列，true为正在运行
-            self.isdequeue = true;
-            var el = task.shift() || function() {};
+            obj.isdequeue = true;
+            var el = task.shift() || function (){};
 			var args = params.shift() || [];
-			Array.prototype.unshift.call(args,this,self);
+			Array.prototype.unshift.call(args,this,obj);
             if (typeof el == "number") {
                 setTimeout(function() {
-                    this.dequeue();
+                    self.dequeue();
                 }, el);
             } else if (typeof el == "function") {
                 el.apply(this,args);
@@ -239,6 +242,11 @@ animate() 方法执行 CSS 属性集的自定义动画。
 	Element.prototype.dequeue = function (){
 		var q = Queue.getInstance(this);
 		q.dequeue();
+		//保证动画停止后还可以继续运行
+		obj = q.obj;
+		if(!obj.task.length){
+			obj.isdequeue = false;
+		}
 	}
 	
 	Element.prototype.clearQueue = function (){
@@ -246,12 +254,19 @@ animate() 方法执行 CSS 属性集的自定义动画。
 		return false;
 	}
 	
+	Element.prototype.end = function (ms){
+		//延时加载
+		var q = Queue.getInstance(this);
+		q.wait(ms);
+		return this;
+	}
 	
 	function startMov(q,obj, json, fn) {//fn回调函数
         clearInterval(obj.timer);//执行动画之前清除动画
         obj.timer = setInterval(function () {
 			var isComplate = [];
             for (var attr in json) {
+				//可枚举，自有属性
 				if(!json.hasOwnProperty(attr)){
 					continue;
 				}
@@ -283,14 +298,14 @@ animate() 方法执行 CSS 属性集的自定义动画。
                 if (fn) {
                     fn();
                 }
+				//动画框架植入队列，保障动画的链式调用
+				obj = q.obj;
 				q.dequeue();
-				self = q.obj;
-				if(!self.task.length){
-					self.isdequeue = false;
+				if(!obj.task.length){
+					obj.isdequeue = false;
 				}
             }
         }, 30);
-		//方便链式调用
     }
     function getStyle(obj, attr)
     {
@@ -302,3 +317,9 @@ animate() 方法执行 CSS 属性集的自定义动画。
     }
 	</script>
 ```
+注意事项：
+	1. 代码实现了对animate的全局调用，支持链式调用，与jq的区别是动画效果仅支持淡入、淡出、以及缓冲运动
+	2. 代码通过js的push()和shift()方法,运用队列先入先出的调用方式，完成动画效果的链式调用
+	3. 在书写代码过程中为防止多次创建新实例，采用单例的设计模式，有效避免了因为多次调用初始化对列
+	4. 参数必须要和函数一起存在对列里，无参数，传入值为空
+	5. 通过element.end(timer)可以实现对列的延时加载
