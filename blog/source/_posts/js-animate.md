@@ -8,12 +8,10 @@ tags:
 - jquery
 ---
 ### 前言  
->我们在开发项目的过程中，经常会遇到类似于jq的animate()，queue(),end(),或者是angular.js的promise等延时加载和链式调用的方法，理解其原理有利于我们编程能力的提高  
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;我们在开发项目的过程中，经常会遇到类似于jq的animate()，queue(),end(),或者是angular.js的promise等延时加载和链式调用的方法，理解其原理有利于我们编程能力的提高  
 
 ### animate用法  
 [具体参数详解](http://www.runoob.com/jquery/eff-animate.html);  
-
-#########################  
 
 ### animate动画实例  
 ```

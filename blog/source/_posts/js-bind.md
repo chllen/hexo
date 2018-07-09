@@ -1,10 +1,13 @@
 ---
 title: javascript中bind()方法的使用与实现
 date: 2018-07-08 23:55:40
+categories:
+- javascript
 tags:
+- js
 ---
 前言：  
-bind方法，字面理解绑定意思，是在ECMAScript 5中新增的方法，但在ES3也可以模拟bind()。bind所做的就是自动封装函数在函数自己的闭包中，这样我们可以捆绑上下文（this关键字）和一系列参数到原来的函数。
+>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bind方法，字面理解绑定意思，是在ECMAScript 5中新增的方法，但在ES3也可以模拟bind()。bind所做的就是自动封装函数在函数自己的闭包中，这样我们可以捆绑上下文（this关键字）和一系列参数到原来的函数。
 
 ### bind()基本用法
 ```
@@ -30,14 +33,12 @@ isPrototypeOf方法：检测对象原型链上是否存在特定的原型对象�
 [参考博客](https://segmentfault.com/a/1190000002662251)
 可以通过如下代码实现这种绑定
 ```
-Function.prototype.bind=function(){
-  var self=this;
-  if(self.bind) {
-	return self.bind();}
+function bind(){
+  if(f.bind) {
+	return f.bind();}
   else {
 	return function (){
-	  //this代表window对象，表示self为全局方法
-	  return self.apply(this,arguments);
+	  return f.apply(this,arguments);
 	}
   }
 }
@@ -51,6 +52,7 @@ if(!Function.prototype.bind){
 	bound = function(){
 	  var innerArgs = Array.prototype.slice.call(arguments);
 	  var finalArgs = args.concat(innerArgs);
+		//this代表window对象，表示self为全局方法
 		return self.apply(this, finalArgs);
 	  };
 	bound.prototype = self.prototype;
