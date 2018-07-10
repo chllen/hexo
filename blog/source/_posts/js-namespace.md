@@ -99,7 +99,7 @@ Module.require = function (name, version) {
 ### 导入业务代码
 ```
 Module.importSymbols = function (from) {
-    if (typeof form == 'string') from = Module.modules[from];
+    if (typeof from == 'string') from = Module.modules[from];
     var to = Module.globalNamespace; //dafault
     var symbols = [];
     var firstsymbol = 1;
@@ -132,16 +132,16 @@ Module.importSymbols = function (from) {
     
     if (symbols.length > 0) {
         var allowed;
-        if (from.EXPORT || form.EXPORT_OK) {
+        if (from.EXPORT || from.EXPORT_OK) {
             allowed = {};
             if (from.EXPORT) {
-                for (var i=0; i<form.EXPORT.length; i++) {
+                for (var i=0; i<from.EXPORT.length; i++) {
                     allowed[from.EXPORT[i]] = true;
                 }
             }
             if (from.EXPORT_OK) {
-                for (var i=0; i<form.EXPORT_OK.length; i++) {
-                    allowed[form.EXPORT_OK[i]] = true;
+                for (var i=0; i<from.EXPORT_OK.length; i++) {
+                    allowed[from.EXPORT_OK[i]] = true;
                 }
             }
         }
@@ -152,7 +152,7 @@ Module.importSymbols = function (from) {
         var s = symbols[i];
         if (!(s in from)) throw new Error('symbol '+s+' is not defined');
         if (!!allowed && !(s in allowed)) throw new Error(s+' is not public, cannot be imported');
-        to[s] = form[s];
+        to[s] = from[s];
     }
 }
 ```
@@ -160,12 +160,12 @@ Module.importSymbols = function (from) {
 ### demo实例
 ```
 Module.createNamespace('Hongru.me', '0.1.1');
-var obj = {};
-obj.EXPORT = ['define'];
-obj.define = function () {
+var demo = {};
+demo.EXPORT = ['define'];
+demo.define = function () {
     this.NAME = '__me';
 }
-Module.importSymbols(obj, 'Hongru.me',);//把me名字空间下的标记导入到Hongru名字空间下
+Module.importSymbols(demo, Hongru);//把me名字空间下的标记导入到Hongru名字空间下
 ```
 
 ### 代码完整封装
@@ -227,7 +227,7 @@ Module.require = function (name, version) {
 };
 // import module
 Module.importSymbols = function (from) {
-    if (typeof form == 'string') from = Module.modules[from];
+    if (typeof from == 'string') from = Module.modules[from];
     var to = Module.globalNamespace; //dafault
     var symbols = [];
     var firstsymbol = 1;
@@ -260,27 +260,26 @@ Module.importSymbols = function (from) {
     
     if (symbols.length > 0) {
         var allowed;
-        if (from.EXPORT || form.EXPORT_OK) {
+        if (from.EXPORT || from.EXPORT_OK) {
             allowed = {};
             if (from.EXPORT) {
-                for (var i=0; i<form.EXPORT.length; i++) {
+                for (var i=0; i<from.EXPORT.length; i++) {
                     allowed[from.EXPORT[i]] = true;
                 }
             }
             if (from.EXPORT_OK) {
-                for (var i=0; i<form.EXPORT_OK.length; i++) {
-                    allowed[form.EXPORT_OK[i]] = true;
+                for (var i=0; i<from.EXPORT_OK.length; i++) {
+                    allowed[from.EXPORT_OK[i]] = true;
                 }
             }
         }
-
     }
     //import the symbols
     for (var i=0; i<symbols.length; i++) {
         var s = symbols[i];
         if (!(s in from)) throw new Error('symbol '+s+' is not defined');
         if (!!allowed && !(s in allowed)) throw new Error(s+' is not public, cannot be imported');
-        to[s] = form[s];
+        to[s] = from[s];
     }
 }
 ```
